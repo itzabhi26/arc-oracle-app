@@ -580,25 +580,23 @@ async function initiateWalletConnect() {
     currentConnectedSigner = connectedWeb3Provider.getSigner();
     
     // 1. Sabse pehle function ke andar top par yeh constant set karein
-const TARGET_HEX_CHAIN = "0x4CEE6"; // 5042002 ka strict Hexadecimal code
+const TARGET_HEX_CHAIN = "0x4cee6"; // 5042002 ka strict Hexadecimal code
 
 try {
-  // Wallet ko direct sahi chain (5042002) par switch karne ki request
   await window.ethereum.request({
     method: 'wallet_switchEthereumChain',
-    params: [{ chainId: TARGET_HEX_CHAIN }],
+    params: [{ chainId: "0x4cee6" }], // 1. Strict lowercase hex format
   });
 } catch (switchError) {
-  // Agar network Rabby me added nahi hai (Error 4902 ya -32603), toh automatic add karein
   if (switchError.code === 4902 || switchError.code === -32603) {
     try {
       await window.ethereum.request({
         method: 'wallet_addEthereumChain',
         params: [{
-          chainId: TARGET_HEX_CHAIN,
+          chainId: "0x4cee6", // 2. Strictly matching lowercase hex
           chainName: 'Arc Testnet',
           nativeCurrency: { name: 'USDC Gas Token', symbol: 'USDC', decimals: 18 },
-          rpcUrls: ['https://arc-testnet.drpc.org'], // Verified Chainlist RPC URL
+          rpcUrls: ['https://arc-testnet.drpc.org'],
           blockExplorerUrls: ['https://explorer.testnet.arc.network']
         }]
       });
