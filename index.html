@@ -579,30 +579,34 @@ async function initiateWalletConnect() {
     currentUserEVMAddress = ethers.utils.getAddress(operationalAccountsList[0]);
     currentConnectedSigner = connectedWeb3Provider.getSigner();
     
-    const targetChainHexRepresentation = "0x1A96"; // 6806 for ARC Testnet
-    // Purane network check ko is lightweight aur bypass-friendly code se replace karein
-    try {
+    // 1. Sabse pehle function ke andar top par yeh constant set karein
+const TARGET_HEX_CHAIN = "0x4CEE6"; // 5042002 ka strict Hexadecimal code
+
+try {
+  // Wallet ko direct sahi chain (5042002) par switch karne ki request
   await window.ethereum.request({
     method: 'wallet_switchEthereumChain',
-    params: [{ chainId: "0x4CEE6" }], // 1. Yahan bhi naya chain ID (5042002 Hex)
+    params: [{ chainId: TARGET_HEX_CHAIN }],
   });
 } catch (switchError) {
-  // Agar Rabby block kare ya chain unrecognized ho, toh details force karein
+  // Agar network Rabby me added nahi hai (Error 4902 ya -32603), toh automatic add karein
   if (switchError.code === 4902 || switchError.code === -32603) {
     try {
       await window.ethereum.request({
         method: 'wallet_addEthereumChain',
         params: [{
-          chainId: "0x4CEE6", // 2. Yahan bhi same naya chain ID
+          chainId: TARGET_HEX_CHAIN,
           chainName: 'Arc Testnet',
           nativeCurrency: { name: 'USDC Gas Token', symbol: 'USDC', decimals: 18 },
-          rpcUrls: ['https://arc-testnet.drpc.org'],
+          rpcUrls: ['https://arc-testnet.drpc.org'], // Verified Chainlist RPC URL
           blockExplorerUrls: ['https://explorer.testnet.arc.network']
         }]
       });
     } catch (addError) {
-      console.log("Network forcing bypassed for extension stability.");
+      console.error("Wallet connection failed:", addError);
     }
+  } else {
+    console.error("Switch chain error:", switchError);
   }
 }
     synchronizeConnectedWalletStateUI();
