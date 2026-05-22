@@ -582,29 +582,29 @@ async function initiateWalletConnect() {
     const targetChainHexRepresentation = "0x1A96"; // 6806 for ARC Testnet
     // Purane network check ko is lightweight aur bypass-friendly code se replace karein
     try {
+  await window.ethereum.request({
+    method: 'wallet_switchEthereumChain',
+    params: [{ chainId: "0x4CEE6" }], // 1. Yahan bhi naya chain ID (5042002 Hex)
+  });
+} catch (switchError) {
+  // Agar Rabby block kare ya chain unrecognized ho, toh details force karein
+  if (switchError.code === 4902 || switchError.code === -32603) {
+    try {
       await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: "0x1A96" }], // Strict Hex format injection
+        method: 'wallet_addEthereumChain',
+        params: [{
+          chainId: "0x4CEE6", // 2. Yahan bhi same naya chain ID
+          chainName: 'Arc Testnet',
+          nativeCurrency: { name: 'USDC Gas Token', symbol: 'USDC', decimals: 18 },
+          rpcUrls: ['https://arc-testnet.drpc.org'],
+          blockExplorerUrls: ['https://explorer.testnet.arc.network']
+        }]
       });
-    } catch (switchError) {
-      // Agar Rabby block kare ya chain unrecognized ho, toh manually bypass karke details force karein
-      if (switchError.code === 4902 || switchError.code === -32603) {
-        try {
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: "0x1A96",
-              chainName: 'ARC Testnet',
-              nativeCurrency: { name: 'USDC Gas Token', symbol: 'USDC', decimals: 6 },
-              rpcUrls: ['https://rpc.testnet.arc.network'],
-              blockExplorerUrls: ['https://explorer.testnet.arc.network']
-            }]
-          });
-        } catch (addError) {
-          console.log("Network forcing bypassed for extension stability.");
-        }
-      }
+    } catch (addError) {
+      console.log("Network forcing bypassed for extension stability.");
     }
+  }
+}
     synchronizeConnectedWalletStateUI();
     displayFeedbackToast("Wallet Connected", "Handshake with ARC network finalized.", "success");
   } catch (err) {
