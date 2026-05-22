@@ -578,7 +578,7 @@ async function fetchUserWalletBalance(walletAddress) {
   try {
     const rawBalance = await connectedWeb3Provider.getBalance(walletAddress);
     const parsedBalance = ethers.utils.formatEther(rawBalance);
-    const formattedBalance = parseFloat(parsedBalance).toFixed(2);
+    const formattedBalance = parseFloat(parsedBalance).toFixed(4); // Match precise token visuals
     
     const balanceBadge = document.getElementById('walletBalanceBadge');
     if(balanceBadge) {
@@ -602,32 +602,40 @@ async function initiateWalletConnect() {
   }
   try {
     connectedWeb3Provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+    
+    // Check user's currently active network first to prevent redundant popups
+    const currentNetwork = await connectedWeb3Provider.getNetwork();
+    const targetChainIdDecimal = 5042002;
+    const officialArcChainIdHex = "0x4CEEFA"; 
+
     const operationalAccountsList = await window.ethereum.request({ method: 'eth_requestAccounts' });
     currentUserEVMAddress = ethers.utils.getAddress(operationalAccountsList[0]);
     currentConnectedSigner = connectedWeb3Provider.getSigner();
-    
-    // ARC DOCS CRITICAL FIX: OFFICIAL PARAMETERS MAP
-    const officialArcChainIdHex = "0x4CEEFA"; // Decimal 5042002 Hex conversion matching docs
-    try {
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: officialArcChainIdHex }],
-      });
-    } catch (switchError) {
-      if (switchError.code === 4902 || switchError.code === -32603) {
-        try {
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: officialArcChainIdHex,
-              chainName: 'Arc Testnet',
-              nativeCurrency: { name: 'USDC Gas Token', symbol: 'USDC', decimals: 18 },
-              rpcUrls: ['https://rpc.testnet.arc.network'],
-              blockExplorerUrls: ['https://testnet.arcscan.app']
-            }]
-          });
-        } catch (addError) {
-          console.log("Forced routing active.");
+
+    // STRICT SMART BRIDGE: Add/Switch network ONLY if user isn't already on Arc Testnet
+    if (currentNetwork.chainId !== targetChainIdDecimal) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: officialArcChainIdHex }],
+        });
+      } catch (switchError) {
+        // If the custom network needs registration mapping inside the provider state
+        if (switchError.code === 4902 || switchError.code === -32603) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: officialArcChainIdHex,
+                chainName: 'Arc Testnet',
+                nativeCurrency: { name: 'USDC Gas Token', symbol: 'USDC', decimals: 18 },
+                rpcUrls: ['https://rpc.testnet.arc.network'],
+                blockExplorerUrls: ['https://testnet.arcscan.app']
+              }]
+            });
+          } catch (addError) {
+            console.log("Forced handshake integration bypassed.");
+          }
         }
       }
     }
