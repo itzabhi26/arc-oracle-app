@@ -350,7 +350,10 @@ const ARC_NETWORK_PARAMS = {
   chainId:           ARC_CHAIN_ID_HEX,
   chainName:         "Arc Testnet",
   nativeCurrency:    { name: "USDC Gas Token", symbol: "USDC", decimals: 18 },
-  rpcUrls:           ["https://rpc.testnet.arc.network"],
+  rpcUrls:           [
+    "https://5042002.rpc.thirdweb.com",   // PRIMARY: Thirdweb RPC — chain ID verified correct
+    "https://rpc.testnet.arc.network"      // FALLBACK: Official RPC
+  ],
   blockExplorerUrls: ["https://testnet.arcscan.app"]
 };
 
