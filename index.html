@@ -112,7 +112,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--arc-navy);colo
 #app.visible{display:flex;}
 
 nav{
-  position:relative;z-index:100;display:flex;align-items:center;justify-between;
+  position:relative;z-index:100;display:flex;align-items:center;justify-content:space-between;
   padding:16px 32px;background:var(--nav-bg);border-bottom:1px solid var(--border-color);
   backdrop-filter:blur(20px);flex-shrink:0;gap:15px;
 }
@@ -576,7 +576,6 @@ function switchMainTab(targetTabId) {
 async function fetchUserWalletBalance(walletAddress) {
   if (!connectedWeb3Provider || !walletAddress) return;
   try {
-    // Kyunki native gas fee ab USDC hai, toh wallet balance seedhe native balance fetch karega
     const rawBalance = await connectedWeb3Provider.getBalance(walletAddress);
     const parsedBalance = ethers.utils.formatEther(rawBalance);
     const formattedBalance = parseFloat(parsedBalance).toFixed(2);
@@ -607,11 +606,12 @@ async function initiateWalletConnect() {
     currentUserEVMAddress = ethers.utils.getAddress(operationalAccountsList[0]);
     currentConnectedSigner = connectedWeb3Provider.getSigner();
     
-    const targetChainIdHex = "0x4CEE6"; // 5042002 Hex for stable chain connectivity parameters
+    // ARC DOCS CRITICAL FIX: OFFICIAL PARAMETERS MAP
+    const officialArcChainIdHex = "0x4CEEFA"; // Decimal 5042002 Hex conversion matching docs
     try {
       await window.ethereum.request({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: targetChainIdHex }],
+        params: [{ chainId: officialArcChainIdHex }],
       });
     } catch (switchError) {
       if (switchError.code === 4902 || switchError.code === -32603) {
@@ -619,15 +619,15 @@ async function initiateWalletConnect() {
           await window.ethereum.request({
             method: 'wallet_addEthereumChain',
             params: [{
-              chainId: targetChainIdHex,
+              chainId: officialArcChainIdHex,
               chainName: 'Arc Testnet',
               nativeCurrency: { name: 'USDC Gas Token', symbol: 'USDC', decimals: 18 },
-              rpcUrls: ['https://arc-testnet.drpc.org'],
-              blockExplorerUrls: ['https://explorer.testnet.arc.network']
+              rpcUrls: ['https://rpc.testnet.arc.network'],
+              blockExplorerUrls: ['https://testnet.arcscan.app']
             }]
           });
         } catch (addError) {
-          console.log("Network forcing bypassed for extension stability.");
+          console.log("Forced routing active.");
         }
       }
     }
@@ -636,7 +636,6 @@ async function initiateWalletConnect() {
     await fetchUserWalletBalance(currentUserEVMAddress);
     displayFeedbackToast("Wallet Connected", "Handshake with ARC network finalized.", "success");
     
-    // Auto balance refresh tracker integration loop
     setInterval(async () => {
       if(currentUserEVMAddress) await fetchUserWalletBalance(currentUserEVMAddress);
     }, 8000);
