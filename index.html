@@ -575,7 +575,7 @@ async function initiateWalletConnect() {
     currentUserEVMAddress = ethers.utils.getAddress(operationalAccountsList[0]);
     currentConnectedSigner = connectedWeb3Provider.getSigner();
     
-    const targetChainHex = "0x4D0352"; // Hex for 5047186 (ARC Testnet correct Chain ID)
+    const targetChainHex = "0x4cef52"; // 5042002 = Official Arc Testnet Chain ID
     
     try {
       await window.ethereum.request({
@@ -591,7 +591,7 @@ async function initiateWalletConnect() {
               chainId: targetChainHex, 
               chainName: 'Arc Testnet',
               nativeCurrency: { name: 'USDC Gas Token', symbol: 'USDC', decimals: 18 },
-              rpcUrls: ['https://arc-testnet.drpc.org'],
+              rpcUrls: ['https://rpc.testnet.arc.network'],
               blockExplorerUrls: ['https://explorer.testnet.arc.network']
             }]
           });
